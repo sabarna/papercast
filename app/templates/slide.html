@@ -5,31 +5,61 @@
   <title>Slide</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-          onload="renderMathInElement(document.body, {
-            delimiters: [
-              {left:'$$',right:'$$',display:true},
-              {left:'$',right:'$',display:false}
-            ],
-            throwOnError: false,
-            errorColor: '#f7768e'
-          });
-          // Wait for KaTeX's web fonts to load before measuring — otherwise
-          // scrollWidth is computed against fallback metrics and we undercount.
-          document.fonts.ready.then(function(){
-            document.querySelectorAll('.equation').forEach(function(el){
-              var inner = el.querySelector('.katex-display') || el.firstElementChild;
-              if (!inner) return;
-              var w = inner.scrollWidth;
-              var maxW = el.clientWidth;
-              if (w > maxW) {
-                var s = maxW / w;
-                inner.style.transformOrigin = 'center top';
-                inner.style.transform = 'scale(' + s.toFixed(4) + ')';
-              }
-            });
-            document.body.dataset.katexDone = '1';
-          });"></script>
+  <script>window.__KATEX_MACROS__ = {{ katex_macros|default('{}')|safe }};</script>
+  <script>
+    // Render each equation manually so we can recover from unknown commands.
+    // Papers pull macros from packages (e.g. cryptocode) whose .sty isn't in the
+    // arXiv source, so those commands are undefined. On an "Undefined control
+    // sequence" error we register that command as upright text and retry — the
+    // math renders cleanly instead of leaking a raw "\command".
+    window.addEventListener('load', function () {
+      var macros = Object.assign({}, window.__KATEX_MACROS__ || {});
+      function render(el, tex) {
+        for (var i = 0; i < 100; i++) {
+          try {
+            katex.render(tex, el, { displayMode: true, throwOnError: true, macros: macros });
+            return;
+          } catch (e) {
+            var m = /Undefined control sequence: \\([A-Za-z@]+)/.exec(e.message || '');
+            if (m && !(('\\' + m[1]) in macros)) {
+              macros['\\' + m[1]] = '\\mathsf{' + m[1] + '}';
+              continue;
+            }
+            // Non-fixable (usually structural) error: try progressively softer
+            // renders instead of dumping raw LaTeX source onto the slide.
+            try {
+              katex.render(tex, el, { displayMode: true, throwOnError: false, errorColor: '#e7ecf3', macros: macros });
+            } catch (_) {
+              var simple = tex
+                .replace(/\\(begin|end)\{[a-zA-Z*]+\}/g, ' ')
+                .replace(/\\\\/g, ' \\quad ')
+                .replace(/&/g, ' ');
+              try {
+                katex.render(simple, el, { displayMode: true, throwOnError: false, errorColor: '#e7ecf3', macros: macros });
+              } catch (__) { el.textContent = ''; }
+            }
+            return;
+          }
+        }
+      }
+      document.querySelectorAll('.equation').forEach(function (el) {
+        render(el, el.getAttribute('data-tex') || '');
+      });
+      document.fonts.ready.then(function () {
+        document.querySelectorAll('.equation').forEach(function (el) {
+          var inner = el.querySelector('.katex-display') || el.firstElementChild;
+          if (!inner) return;
+          var w = inner.scrollWidth, maxW = el.clientWidth;
+          if (w > maxW) {
+            var scale = maxW / w;
+            inner.style.transformOrigin = 'center top';
+            inner.style.transform = 'scale(' + scale.toFixed(4) + ')';
+          }
+        });
+        document.body.dataset.katexDone = '1';
+      });
+    });
+  </script>
   <style>
     html, body { margin: 0; padding: 0; width: 1920px; height: 1080px; background: #0b1220; color: #e7ecf3;
                  font-family: 'Inter', -apple-system, system-ui, sans-serif; }
@@ -74,7 +104,7 @@
 
     {% elif visual.kind == "equation" %}
       {% if visual.title %}<h2>{{ visual.title }}</h2>{% endif %}
-      <div class="equation">$$ {{ equation_latex }} $$</div>
+      <div class="equation" data-tex="{{ equation_latex|e }}"></div>
       {% if visual.caption %}<p style="font-size:30px;color:#a9b6ce;text-align:center;margin-top:32px;">{{ visual.caption }}</p>{% endif %}
 
     {% elif visual.kind == "split" %}

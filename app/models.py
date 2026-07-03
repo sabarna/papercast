@@ -43,6 +43,7 @@ class Paper(BaseModel):
     sections: list[Section] = Field(default_factory=list)
     figures: dict[str, Figure] = Field(default_factory=dict)
     equations: dict[str, Equation] = Field(default_factory=dict)
+    macros: dict[str, str] = Field(default_factory=dict)   # KaTeX macros from the preamble
 
 
 # ---------- Narrative script ----------

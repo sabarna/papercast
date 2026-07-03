@@ -65,6 +65,7 @@ def build_paper(arxiv_id: str, ps: ParsedSource, workdir: Path) -> Paper:
         sections=sections,
         figures=figures,
         equations=equations,
+        macros=ps.macros,
     )
 
 

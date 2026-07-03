@@ -55,6 +55,7 @@ class ParsedSource:
     sections: list[RawSection] = field(default_factory=list)
     figures: list[RawFigure] = field(default_factory=list)
     equations: list[RawEquation] = field(default_factory=list)
+    macros: dict = field(default_factory=dict)   # {"\\name": "body"} for KaTeX
 
 
 # --- entry point ---
@@ -73,6 +74,7 @@ def parse_source(source_dir: Path) -> ParsedSource:
 
     ps.figures = _extract_figures(flat, source_dir)
     ps.equations = _extract_equations(flat)
+    ps.macros = _extract_all_macros(source_dir)
     ps.sections = _split_into_sections(flat, ps)
 
     return ps
@@ -267,3 +269,116 @@ def _tex_to_text(s: str) -> str:
     except Exception:  # noqa: BLE001
         # pylatexenc can choke on weird fragments; fall back to regex cleanup
         return re.sub(r"\\[a-zA-Z]+\*?", "", s)
+
+
+# --- custom macro extraction (so KaTeX understands the paper's own commands) ---
+
+# Commands KaTeX doesn't implement but that are harmless in always-math context.
+_SHIM_MACROS = {
+    "\\ensuremath": "#1",   # KaTeX is already in math mode
+    "\\xspace": "",
+}
+
+# The `cryptocode` package (very common in crypto papers) ships style wrappers
+# that aren't in the arXiv source, so we can't extract them — shim them here so
+# paper macros that expand to \pcalgostyle{...} etc. render instead of breaking.
+_CRYPTOCODE_SHIMS = {
+    "\\pcalgostyle": "\\mathsf{#1}",
+    "\\pckeystyle": "\\mathsf{#1}",
+    "\\pcnotionstyle": "\\mathrm{#1}",
+    "\\pcmathhyphen": "\\text{-}",
+    "\\highlightkeyword": "#1",
+    "\\texorpdfstring": "#1",
+    "\\pcalgo": "\\mathsf{#1}",
+}
+
+_MACRO_STARTS = re.compile(
+    r"\\(newcommand|renewcommand|providecommand|DeclareMathOperator|def)\b\*?"
+)
+
+
+def _read_group(src: str, i: int) -> tuple[str, int]:
+    """src[i] must be '{'. Return (inner_text, index_after_matching_brace)."""
+    depth = 0
+    j = i
+    while j < len(src):
+        c = src[j]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return src[i + 1 : j], j + 1
+        j += 1
+    return src[i + 1 :], len(src)
+
+
+def _extract_macros(src: str) -> dict:
+    """Collect macro definitions from a LaTeX blob.
+
+    Supports \\newcommand / \\renewcommand / \\providecommand / \\DeclareMathOperator
+    and plain \\def. Returns ``{"\\name": "body"}`` for KaTeX's ``macros`` option;
+    the body keeps ``#1`` placeholders so KaTeX infers the argument count.
+    """
+    macros: dict[str, str] = {}
+    for m in _MACRO_STARTS.finditer(src):
+        kind = m.group(1)
+        i = m.end()
+        while i < len(src) and src[i].isspace():
+            i += 1
+        # --- command name: {\name} or bare \name ---
+        name = None
+        if i < len(src) and src[i] == "{":
+            grp, i = _read_group(src, i)
+            name = grp.strip()
+        elif i < len(src) and src[i] == "\\":
+            j = i + 1
+            while j < len(src) and src[j].isalpha():
+                j += 1
+            name = src[i:j]
+            i = j
+        if not name or not name.startswith("\\") or len(name) < 2:
+            continue
+        # --- everything between the name and the body brace is arg spec ---
+        # (newcommand: [n][default];  def: #1#2...). Neither contains '{', so
+        # scanning to the next top-level '{' lands us on the body for all forms.
+        depth_brackets = 0
+        while i < len(src):
+            c = src[i]
+            if c == "{":
+                break
+            if c == "\n" and depth_brackets == 0:
+                # a def/newcommand body is on the same logical line; a bare newline
+                # with no pending bracket means a malformed capture — bail.
+                pass
+            i += 1
+        if i >= len(src) or src[i] != "{":
+            continue
+        body, i = _read_group(src, i)
+        if kind == "DeclareMathOperator":
+            body = "\\operatorname{" + body + "}"
+        macros.setdefault(name, body)  # first definition wins
+    return macros
+
+
+def _extract_all_macros(source_dir: Path) -> dict:
+    """Scan every .tex/.sty file in the source tree for macro definitions.
+
+    Macros are frequently defined in a separate ``macros.tex`` or a local ``.sty``
+    that the main file pulls in via \\usepackage — so we can't rely on the flattened
+    main document alone.
+    """
+    macros: dict[str, str] = {}
+    for pattern in ("*.tex", "*.sty"):
+        for f in sorted(source_dir.rglob(pattern)):
+            try:
+                text = f.read_text(errors="ignore")
+            except OSError:
+                continue
+            for name, body in _extract_macros(text).items():
+                macros.setdefault(name, body)
+    # shims fill in only where the paper didn't define its own
+    for shim in (_CRYPTOCODE_SHIMS, _SHIM_MACROS):
+        for name, body in shim.items():
+            macros.setdefault(name, body)
+    return macros

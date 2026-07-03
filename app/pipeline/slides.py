@@ -9,6 +9,7 @@ screenshotted at SLIDE_WIDTH × SLIDE_HEIGHT.
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 from pathlib import Path
@@ -30,7 +31,11 @@ def _clean_equation_latex(latex: str) -> str:
         an explicit alignment environment, so wrap in ``\\begin{aligned}``.
     """
     latex = re.sub(r"\\label\{[^}]*\}", "", latex).strip()
-    if "&" in latex or "\\\\" in latex:
+    # Only add an alignment wrapper if the equation needs one AND doesn't
+    # already contain its own environment (nesting \begin{aligned} around an
+    # existing \begin{gathered}/\begin{cases} makes KaTeX hard-fail).
+    needs_align = "&" in latex or "\\\\" in latex
+    if needs_align and "\\begin{" not in latex:
         latex = r"\begin{aligned}" + latex + r"\end{aligned}"
     return latex
 
@@ -57,6 +62,7 @@ def _beat_context(beat: Beat, paper: Paper) -> dict:
         "figure_url": f"file://{figure.path.resolve()}" if figure else None,
         "figure_caption": figure.caption if figure else None,
         "equation_latex": _clean_equation_latex(equation.latex) if equation else None,
+        "katex_macros": json.dumps(paper.macros),
         "paper_title": paper.title,
     }
 
