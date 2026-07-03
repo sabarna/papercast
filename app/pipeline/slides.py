@@ -21,6 +21,23 @@ from app.config import settings
 from app.models import Beat, Paper, Script
 
 
+# Non-math LaTeX layout/spacing commands that sometimes get captured inside an
+# equation. KaTeX can't use them, so we remove them (with their arguments)
+# rather than let them render as stray text.
+_LAYOUT_STRIP = [
+    re.compile(r"\\setlength\s*\{?\s*\\[a-zA-Z@]+\s*\}?\s*\{[^}]*\}"),
+    re.compile(r"\\(?:vspace|vskip|addvspace)\*?\s*\{[^}]*\}"),
+    re.compile(r"\\(?:abovedisplayskip|belowdisplayskip|abovedisplayshortskip|belowdisplayshortskip)\b"),
+    re.compile(r"\\(?:noindent|centering|raggedright|raggedleft|allowdisplaybreaks)\b"),
+]
+
+
+def _strip_layout_commands(latex: str) -> str:
+    for pat in _LAYOUT_STRIP:
+        latex = pat.sub(" ", latex)
+    return latex
+
+
 def _clean_equation_latex(latex: str) -> str:
     """Prep a raw LaTeX equation for KaTeX rendering.
 
@@ -30,7 +47,8 @@ def _clean_equation_latex(latex: str) -> str:
       - ``&`` column separators and ``\\\\`` row breaks — only valid inside
         an explicit alignment environment, so wrap in ``\\begin{aligned}``.
     """
-    latex = re.sub(r"\\label\{[^}]*\}", "", latex).strip()
+    latex = re.sub(r"\\label\{[^}]*\}", "", latex)
+    latex = _strip_layout_commands(latex).strip()
     # Only add an alignment wrapper if the equation needs one AND doesn't
     # already contain its own environment (nesting \begin{aligned} around an
     # existing \begin{gathered}/\begin{cases} makes KaTeX hard-fail).

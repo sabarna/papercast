@@ -8,8 +8,8 @@ own machine — you bring your own API key.
 
 Use it two ways:
 
-- **Command line** — `papercast 2301.07041` and a video pops out.
-- **Web UI** — `papercast-web`, paste an ID in the browser, watch progress live.
+- **Command line** — `python3 -m app.cli 1706.03762` and a video pops out.
+- **Web UI** — `python3 -m app.web`, then open the browser and watch progress live.
 
 ---
 
@@ -55,55 +55,81 @@ your machine — `.env` is git-ignored and never committed.
 
 ## Install
 
+Python 3.11+ required. A virtual environment is strongly recommended so the
+install stays self-contained and the commands resolve correctly.
+
 ```bash
 git clone https://github.com/sabarna/papercast.git
 cd papercast
 
-# 1. Install the package (creates the `papercast` and `papercast-web` commands)
-pip install -e .
+# 1. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 
-# 2. Install the headless browser used to render slides
+# 2. Install PaperCast and its Python dependencies
+python3 -m pip install -e .
+
+# 3. Install the headless browser used to render slides
 playwright install chromium
 
-# 3. Install ffmpeg (system package)
+# 4. Install ffmpeg (system package)
 #    macOS:   brew install ffmpeg
 #    Ubuntu:  sudo apt install ffmpeg
 
-# 4. Add your API key (see "Getting an OpenAI API key" above)
+# 5. Create your env file
 cp .env.example .env
-#    then edit .env and set OPENAI_API_KEY=sk-...
 ```
 
-> Your key is read from a local `.env` file (or ordinary environment variables).
-> `.env` is git-ignored — your key never gets committed.
+Now open `.env` and set your key (from the section above):
+
+```
+OPENAI_API_KEY=sk-your-real-key-here
+```
+
+> `.env` is git-ignored — your key stays on your machine and is never committed.
+> You can also export `OPENAI_API_KEY` as an environment variable instead of
+> using the file.
+
+Keep the virtual environment active whenever you use PaperCast. In a new
+terminal, re-activate it with `source .venv/bin/activate`.
 
 ---
 
-## Command-line usage
+## Usage — command line
+
+Run from the project folder with the virtual environment active:
 
 ```bash
-# simplest — writes ./2301.07041.mp4
-papercast 2301.07041
+# simplest — writes ./1706.03762.mp4
+python3 -m app.cli 1706.03762
 
 # a URL works too, and you can choose the output path
-papercast https://arxiv.org/abs/2301.07041 -o talk.mp4
+python3 -m app.cli https://arxiv.org/abs/1706.03762 -o talk.mp4
 
 # tune length, voice, and model
-papercast 2301.07041 --duration 300 --voice nova --model gpt-5.5
+python3 -m app.cli 1706.03762 --duration 300 --voice nova --model gpt-5.5
 
 # keep the intermediate slides / audio for inspection
-papercast 2301.07041 --keep-workspace -v
+python3 -m app.cli 1706.03762 --keep-workspace -v
 ```
 
-Run `papercast --help` for the full list of options.
+`python3 -m app.cli --help` lists every option. A good first paper to try is
+`1706.03762` (*Attention Is All You Need*).
+
+> **Shortcut command:** after `pip install -e .` you can also run
+> `papercast <id>` and `papercast-web`. If either reports
+> `ModuleNotFoundError: No module named 'app'`, your shell is resolving a
+> different environment — use the `python3 -m app.cli` / `python3 -m app.web`
+> forms instead (they always work from the project folder). See
+> [Troubleshooting](#troubleshooting).
 
 ---
 
-## Web UI
+## Usage — web UI
 
 ```bash
-papercast-web
-# open http://127.0.0.1:8000
+python3 -m app.web
+# then open http://127.0.0.1:8000
 ```
 
 Paste an arXiv ID, and the page streams live status while the video builds, then
@@ -114,11 +140,42 @@ to require a login so nobody else can spend your API credits.
 
 ---
 
+## Troubleshooting
+
+- **`command not found: pip`** — use `python3 -m pip ...` instead of bare `pip`.
+- **`ModuleNotFoundError: No module named 'app'`** when running `papercast` /
+  `papercast-web` — the shortcut is resolving to a different virtual environment.
+  Run `python3 -m app.cli <id>` (or `python3 -m app.web`) from the project
+  folder, or recreate the venv:
+  ```bash
+  python3 -m venv .venv && source .venv/bin/activate && python3 -m pip install -e .
+  ```
+- **`ffmpeg: command not found` / the video won't encode** — install ffmpeg
+  (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Ubuntu).
+- **`insufficient_quota` from OpenAI** — add billing credit; the API is separate
+  from ChatGPT Plus (see [Getting an OpenAI API key](#getting-an-openai-api-key)).
+- **The model name is rejected** — set `NARRATIVE_MODEL` in `.env` to a model your
+  account can access (a current `gpt-...` id from your OpenAI dashboard).
+- **Some equations render as plain upright text** — PaperCast typesets math with
+  KaTeX, which covers a subset of LaTeX. Commands from packages not in the arXiv
+  source fall back to readable upright text rather than breaking the slide.
+
+---
+
+## Limitations
+
+- Needs the paper's **LaTeX source** on arXiv. PDF-only submissions aren't supported.
+- Equation rendering uses **KaTeX** (a LaTeX subset), so very custom notation may
+  render approximately.
+- Uses the **paid OpenAI API** — expect roughly well under $1 per paper.
+
+---
+
 ## Development
 
 ```bash
-pip install -e ".[dev]"
-pytest
+python3 -m pip install -e ".[dev]"
+python3 -m pytest
 ruff check .
 ```
 
