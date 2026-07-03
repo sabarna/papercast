@@ -48,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="target video length in seconds (default: %d)" % settings.target_duration_s,
     )
     p.add_argument("--voice", default=None, help="TTS voice (default: %s)" % settings.tts_voice)
-    p.add_argument("--model", default=None, help="Claude model (default: %s)" % settings.claude_model)
+    p.add_argument("--model", default=None, help="OpenAI model for the narrative (default: %s)" % settings.narrative_model)
     p.add_argument(
         "--keep-workspace", action="store_true",
         help="keep intermediate files (source, slides, audio) instead of pruning them",
@@ -58,16 +58,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _check_keys() -> None:
-    missing = []
-    if not settings.anthropic_api_key:
-        missing.append("ANTHROPIC_API_KEY")
     if not settings.openai_api_key:
-        missing.append("OPENAI_API_KEY")
-    if missing:
         raise SystemExit(
-            "error: missing required API key(s): "
-            + ", ".join(missing)
-            + "\nSet them in a .env file (see .env.example) or as environment variables."
+            "error: missing required OPENAI_API_KEY.\n"
+            "Set it in a .env file (see .env.example) or as an environment variable."
         )
 
 
@@ -89,7 +83,7 @@ async def _run(args: argparse.Namespace) -> Path:
     log.info("       %r — %d sections, %d figures, %d equations",
              paper.title, len(paper.sections), len(paper.figures), len(paper.equations))
 
-    log.info("[3/7] Writing narrative with Claude (%s)", settings.claude_model)
+    log.info("[3/7] Writing narrative (%s)", settings.narrative_model)
     script = await narrative.generate_script(paper, settings.target_duration_s)
     script_path = workdir / "script.json"
     script_path.write_text(script.model_dump_json(indent=2))
@@ -129,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.voice is not None:
         settings.tts_voice = args.voice
     if args.model is not None:
-        settings.claude_model = args.model
+        settings.narrative_model = args.model
 
     _check_keys()
 

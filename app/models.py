@@ -1,7 +1,7 @@
 """Typed domain models used across the pipeline.
 
 The Paper model is what comes out of parse+structure; the Script model is what
-Claude returns from the narrative step. Both are JSON-serializable so they can
+the model returns from the narrative step. Both are JSON-serializable so they can
 be inspected per-job in workspace/<job_id>/.
 """
 from __future__ import annotations

@@ -9,8 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # API keys
-    anthropic_api_key: str = ""
+    # API key (OpenAI powers both narration and text-to-speech)
     openai_api_key: str = ""
 
     # Basic auth. Leave both empty for local dev to disable.
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     app_password: str = ""
 
     # Models
-    claude_model: str = "claude-sonnet-4-6"
+    narrative_model: str = "gpt-5.5"
     tts_model: str = "tts-1"
     tts_voice: str = "alloy"
 

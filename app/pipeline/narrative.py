@@ -1,6 +1,6 @@
-"""Step 4 — ask Claude to turn the Paper into a Script of narrated beats.
+"""Step 4 — ask an OpenAI model to turn the Paper into a Script of narrated beats.
 
-The prompt instructs Claude to:
+The prompt instructs the model to:
   * produce N beats sized for a ``target_duration_s`` video
     (~140 wpm narration, ~8s per beat on average)
   * reference ONLY figure/equation IDs that exist in the input
@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 
-from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 from pydantic import ValidationError
 
 from app.config import settings
@@ -62,7 +62,7 @@ CONSTRAINTS:
 
 
 def _serialize_paper_for_prompt(paper: Paper) -> str:
-    """Compact JSON view of the paper for the LLM."""
+    """Compact JSON view of the paper for the model."""
     return json.dumps(
         {
             "title": paper.title,
@@ -90,7 +90,7 @@ def _serialize_paper_for_prompt(paper: Paper) -> str:
 
 
 async def generate_script(paper: Paper, target_duration_s: int) -> Script:
-    client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
     paper_json = _serialize_paper_for_prompt(paper)
 
     user_msg = (
@@ -99,9 +99,13 @@ async def generate_script(paper: Paper, target_duration_s: int) -> Script:
         "Produce the script JSON now."
     )
 
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_msg},
+    ]
+
     last_error: str | None = None
     for attempt in range(2):
-        messages = [{"role": "user", "content": user_msg}]
         if last_error:
             messages.append(
                 {
@@ -113,15 +117,13 @@ async def generate_script(paper: Paper, target_duration_s: int) -> Script:
                 }
             )
 
-        resp = await client.messages.create(
-            model=settings.claude_model,
-            max_tokens=8000,
-            system=SYSTEM_PROMPT,
+        resp = await client.chat.completions.create(
+            model=settings.narrative_model,
             messages=messages,
+            response_format={"type": "json_object"},
+            max_completion_tokens=8000,
         )
-        text = "".join(
-            block.text for block in resp.content if getattr(block, "type", None) == "text"
-        )
+        text = resp.choices[0].message.content or ""
 
         try:
             data = _extract_json(text)
@@ -139,7 +141,6 @@ def _extract_json(text: str) -> dict:
     """Pull a JSON object out of the model's reply, tolerating code fences."""
     text = text.strip()
     if text.startswith("```"):
-        # strip a single fenced block
         text = text.strip("`")
         if text.lower().startswith("json"):
             text = text[4:]

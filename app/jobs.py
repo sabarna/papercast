@@ -90,7 +90,7 @@ async def run_job(job_id: str) -> None:
 
         paper = await asyncio.to_thread(structure.build_paper, job.arxiv_id, parsed, workdir)
 
-        _update(job, "scripting", 0.30, "Writing narrative with Claude")
+        _update(job, "scripting", 0.30, "Writing narrative")
         script = await narrative.generate_script(paper, settings.target_duration_s)
         script_path = workdir / "script.json"
         script_path.write_text(script.model_dump_json(indent=2))

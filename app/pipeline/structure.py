@@ -1,7 +1,7 @@
 """Step 3 — lift the raw ParsedSource into a typed Paper model.
 
 This is where we:
-  - Assign stable IDs (fig1, fig2, eq1, eq2, ...) usable by Claude.
+  - Assign stable IDs (fig1, fig2, eq1, eq2, ...) usable by the model.
   - Convert LaTeX figure paths to web-safe PNGs (pdf/eps -> png) and copy
     them to ``<workdir>/figures/``.
   - Strip LaTeX from section body text for the narrative prompt.

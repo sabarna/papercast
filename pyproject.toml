@@ -26,8 +26,7 @@ dependencies = [
     "pydantic-settings>=2.4",
     "python-dotenv>=1.0",
 
-    # LLM + TTS
-    "anthropic>=0.39",
+    # LLM + TTS (OpenAI: narration + text-to-speech)
     "openai>=1.50",
 
     # LaTeX parsing

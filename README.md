@@ -4,7 +4,7 @@
 
 Give PaperCast an arXiv ID and get back an `.mp4`: AI-written narration, slides
 that surface the paper's figures, and typeset equations. Everything runs on your
-own machine — you bring your own API keys.
+own machine — you bring your own API key.
 
 Use it two ways:
 
@@ -17,7 +17,7 @@ Use it two ways:
 
 1. **Ingest** — downloads the paper's LaTeX source tarball from arXiv.
 2. **Parse** — walks the LaTeX, pulling out sections, figures, and equations.
-3. **Narrative** — Claude writes a ~7-minute script mapped to visuals beat-by-beat.
+3. **Narrative** — an OpenAI model writes a ~7-minute script mapped to visuals beat-by-beat.
 4. **Slides** — each beat is rendered from an HTML template via headless Chromium.
 5. **Voiceover** — OpenAI TTS narrates each beat; slide time = narration length.
 6. **Assemble** — `ffmpeg` stitches the slides and audio into one `.mp4`.
@@ -30,7 +30,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full design.
 
 - Python 3.11+
 - [ffmpeg](https://ffmpeg.org/) on your PATH
-- An **Anthropic API key** (narration) and an **OpenAI API key** (text-to-speech)
+- An **OpenAI API key** — powers both the narration script and the text-to-speech
 
 ---
 
@@ -52,11 +52,11 @@ playwright install chromium
 
 # 4. Add your API keys
 cp .env.example .env
-#    then edit .env and set ANTHROPIC_API_KEY and OPENAI_API_KEY
+#    then edit .env and set OPENAI_API_KEY
 ```
 
-> Keys are read from a local `.env` file (or ordinary environment variables).
-> `.env` is git-ignored — your keys never get committed.
+> Your key is read from a local `.env` file (or ordinary environment variables).
+> `.env` is git-ignored — your key never gets committed.
 
 ---
 
@@ -70,7 +70,7 @@ papercast 2301.07041
 papercast https://arxiv.org/abs/2301.07041 -o talk.mp4
 
 # tune length, voice, and model
-papercast 2301.07041 --duration 300 --voice nova --model claude-sonnet-4-6
+papercast 2301.07041 --duration 300 --voice nova --model gpt-5.5
 
 # keep the intermediate slides / audio for inspection
 papercast 2301.07041 --keep-workspace -v

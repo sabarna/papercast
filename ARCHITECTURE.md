@@ -16,7 +16,7 @@ An MVP that turns an arXiv paper into a 5–10 minute narrated slideshow video.
 | Concern          | Choice                                   | Why                                                     |
 |------------------|------------------------------------------|---------------------------------------------------------|
 | Web framework    | FastAPI + Jinja2 + HTMX                  | One Python process, minimal JS, easy job-status polling |
-| LLM              | Anthropic Claude (`claude-sonnet-4-6`)   | Long context (whole paper fits), strong reasoning       |
+| LLM              | OpenAI GPT (`gpt-5.5`)                    | Long context (whole paper fits), strong reasoning       |
 | TTS              | OpenAI TTS (`tts-1` / `gpt-4o-mini-tts`) | Cheap, fast, decent natural voice                       |
 | LaTeX parsing    | `pylatexenc` + custom heuristics         | Pure Python, handles arXiv's messy real-world LaTeX     |
 | Math rendering   | `matplotlib` mathtext OR KaTeX → PNG     | No full TeX install needed for MVP                      |
@@ -84,7 +84,7 @@ class Paper(BaseModel):
 
 ### 3.4 Narrative (`app/pipeline/narrative.py`)
 
-Single Claude call with the full `Paper` serialized as a structured prompt. Output is a JSON `Script`:
+Single OpenAI call with the full `Paper` serialized as a structured prompt. Output is a JSON `Script`:
 
 ```python
 class Beat(BaseModel):
@@ -105,7 +105,7 @@ class Script(BaseModel):
     beats: list[Beat]
 ```
 
-**Prompt strategy:** the system prompt instructs Claude to act as a science communicator, produce ~N beats for a 5–10 min video, and *must only reference figure/equation IDs that exist in the input*. We validate this on parse; on violation we retry once with the error appended.
+**Prompt strategy:** the system prompt instructs the model to act as a science communicator, produce ~N beats for a 5–10 min video, and *must only reference figure/equation IDs that exist in the input*. We validate this on parse; on violation we retry once with the error appended.
 
 ### 3.5 Slides (`app/pipeline/slides.py`)
 - One Jinja2 template `slide.html` with layout variants per `Visual.kind`.
@@ -144,9 +144,8 @@ Status updates written to `jobs[id].status` in-memory; HTMX `hx-trigger="every 2
 ## 5. Configuration (`.env`)
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
-CLAUDE_MODEL=claude-sonnet-4-6
+NARRATIVE_MODEL=gpt-5.5
 TTS_VOICE=alloy
 TARGET_DURATION_S=420
 WORKSPACE_DIR=./workspace
@@ -159,7 +158,7 @@ WORKSPACE_DIR=./workspace
 | arXiv source has no `.tex` (PDF-only submission)      | Fall back to PDF parsing (Nougat/GROBID) — flagged as Phase 2                |
 | Main `.tex` detection fails on multi-doc sources      | Heuristic: file containing `\documentclass` with largest content             |
 | `\includegraphics` uses `.pdf` / `.eps`               | Convert with `pdftoppm` / `convert` at parse time                            |
-| Claude hallucinates figure IDs                        | Schema-validate output, retry once with error, fall back to bullet-only beats |
+| Model hallucinates figure IDs                        | Schema-validate output, retry once with error, fall back to bullet-only beats |
 | TTS duration > slide visual (e.g. long narration on title slide) | Durations are driven by TTS, not slide hints — always audio-first     |
 | `ffmpeg` missing on user's machine                    | Detect at startup, show setup instructions                                   |
 | Long papers blow out context window                   | Section-level summarization pass before the narrative call                   |
