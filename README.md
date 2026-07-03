@@ -30,7 +30,26 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full design.
 
 - Python 3.11+
 - [ffmpeg](https://ffmpeg.org/) on your PATH
-- An **OpenAI API key** — powers both the narration script and the text-to-speech
+- An **OpenAI API key** — powers both the narration script and the text-to-speech ([how to get one](#getting-an-openai-api-key))
+
+---
+
+## Getting an OpenAI API key
+
+PaperCast uses the OpenAI API for **both** the narration script and the spoken
+voiceover, so you'll need your own API key.
+
+1. Go to **[platform.openai.com/api-keys](https://platform.openai.com/api-keys)** and sign in (or create an account).
+2. Click **Create new secret key**, give it a name (e.g. `papercast`), and **copy it now** — OpenAI only shows it once. It looks like `sk-...`.
+3. Add a payment method and a little credit at **[platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing)**.
+
+> **Important:** the API is billed per use and is **separate from ChatGPT Plus** —
+> a Plus subscription does *not* include API credit. Without a small balance,
+> calls fail with an `insufficient_quota` error. Turning one paper into a video
+> typically costs well under **$1**.
+
+You'll paste this key into your `.env` file during install (below). It stays on
+your machine — `.env` is git-ignored and never committed.
 
 ---
 
@@ -50,9 +69,9 @@ playwright install chromium
 #    macOS:   brew install ffmpeg
 #    Ubuntu:  sudo apt install ffmpeg
 
-# 4. Add your API keys
+# 4. Add your API key (see "Getting an OpenAI API key" above)
 cp .env.example .env
-#    then edit .env and set OPENAI_API_KEY
+#    then edit .env and set OPENAI_API_KEY=sk-...
 ```
 
 > Your key is read from a local `.env` file (or ordinary environment variables).
