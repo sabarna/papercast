@@ -1,0 +1,29 @@
+{# HTMX polls this every 2s and swaps in the whole <div>. #}
+<div
+  id="job-status"
+  hx-get="/jobs/{{ job.id }}/status"
+  {% if job.status not in ("done", "failed") %}
+  hx-trigger="every 2s"
+  hx-swap="outerHTML"
+  {% endif %}
+  data-status="{{ job.status }}"
+>
+  <div class="status-row">
+    <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
+    <span class="status-msg">{{ job.message }}</span>
+  </div>
+
+  <div class="progress">
+    <div class="progress-bar" style="width: {{ (job.progress * 100)|round(1) }}%"></div>
+  </div>
+
+  {% if job.status == "done" %}
+    <video controls preload="metadata" src="/jobs/{{ job.id }}/video"></video>
+    <p>
+      <a href="/jobs/{{ job.id }}/video" download>Download MP4</a> ·
+      <a href="/jobs/{{ job.id }}/script">Download script</a>
+    </p>
+  {% elif job.status == "failed" %}
+    <pre class="error">{{ job.error }}</pre>
+  {% endif %}
+</div>

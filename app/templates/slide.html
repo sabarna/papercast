@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Slide</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body, {
+            delimiters: [
+              {left:'$$',right:'$$',display:true},
+              {left:'$',right:'$',display:false}
+            ],
+            throwOnError: false,
+            errorColor: '#f7768e'
+          });
+          // Wait for KaTeX's web fonts to load before measuring — otherwise
+          // scrollWidth is computed against fallback metrics and we undercount.
+          document.fonts.ready.then(function(){
+            document.querySelectorAll('.equation').forEach(function(el){
+              var inner = el.querySelector('.katex-display') || el.firstElementChild;
+              if (!inner) return;
+              var w = inner.scrollWidth;
+              var maxW = el.clientWidth;
+              if (w > maxW) {
+                var s = maxW / w;
+                inner.style.transformOrigin = 'center top';
+                inner.style.transform = 'scale(' + s.toFixed(4) + ')';
+              }
+            });
+            document.body.dataset.katexDone = '1';
+          });"></script>
+  <style>
+    html, body { margin: 0; padding: 0; width: 1920px; height: 1080px; background: #0b1220; color: #e7ecf3;
+                 font-family: 'Inter', -apple-system, system-ui, sans-serif; }
+    .slide { width: 100%; height: 100%; box-sizing: border-box; padding: 80px 120px; display: flex;
+             flex-direction: column; justify-content: center; }
+    .kicker { color: #7aa2f7; font-size: 28px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
+    h1 { font-size: 92px; line-height: 1.1; margin: 0 0 32px 0; font-weight: 700; }
+    h2 { font-size: 72px; line-height: 1.1; margin: 0 0 40px 0; font-weight: 600; }
+    ul { font-size: 44px; line-height: 1.45; padding-left: 50px; }
+    li { margin-bottom: 24px; }
+    figure { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+             height: 100%; }
+    figure img { max-width: 100%; max-height: 760px; object-fit: contain; background: white; padding: 24px;
+                 border-radius: 16px; }
+    figcaption { margin-top: 24px; font-size: 28px; color: #a9b6ce; text-align: center; max-width: 1400px; }
+    .equation { font-size: 56px; text-align: center; max-width: 100%; overflow: hidden; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; height: 100%; }
+    .footer { position: absolute; bottom: 40px; right: 60px; color: #5a6987; font-size: 22px; }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    {% if visual.kind == "title" %}
+      <div class="kicker">Paper Explainer</div>
+      <h1>{{ visual.title }}</h1>
+      {% if visual.caption %}<p style="font-size:38px;color:#a9b6ce;">{{ visual.caption }}</p>{% endif %}
+
+    {% elif visual.kind == "bullets" %}
+      {% if visual.title %}<h2>{{ visual.title }}</h2>{% endif %}
+      <ul>
+        {% for b in (visual.bullets or []) %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+
+    {% elif visual.kind == "figure" %}
+      {% if visual.title %}<h2>{{ visual.title }}</h2>{% endif %}
+      <figure>
+        {% if figure_url %}<img src="{{ figure_url }}" alt="" />{% endif %}
+        {% if visual.caption or figure_caption %}
+          <figcaption>{{ visual.caption or figure_caption }}</figcaption>
+        {% endif %}
+      </figure>
+
+    {% elif visual.kind == "equation" %}
+      {% if visual.title %}<h2>{{ visual.title }}</h2>{% endif %}
+      <div class="equation">$$ {{ equation_latex }} $$</div>
+      {% if visual.caption %}<p style="font-size:30px;color:#a9b6ce;text-align:center;margin-top:32px;">{{ visual.caption }}</p>{% endif %}
+
+    {% elif visual.kind == "split" %}
+      <div class="split">
+        <div>
+          {% if visual.title %}<h2>{{ visual.title }}</h2>{% endif %}
+          <ul>
+            {% for b in (visual.bullets or []) %}<li>{{ b }}</li>{% endfor %}
+          </ul>
+        </div>
+        <div>
+          {% if figure_url %}<img src="{{ figure_url }}" style="max-width:100%;background:white;padding:24px;border-radius:16px;" />{% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  <div class="footer">{{ paper_title }}</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <h1>Turn an arXiv paper into a narrated video</h1>
+  <p class="lead">Paste an arXiv ID or URL.</p>
+
+  <form method="post" action="/jobs" class="upload-form">
+    <input
+      type="text"
+      name="arxiv_input"
+      placeholder="2301.07041  or  https://arxiv.org/abs/2301.07041"
+      required
+      autofocus
+    />
+    <button type="submit">Generate video</button>
+  </form>
+</section>
+{% endblock %}

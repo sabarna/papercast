@@ -1,0 +1,75 @@
+[project]
+name = "papercast"
+version = "0.1.0"
+description = "Turn an arXiv paper into a narrated slideshow video — from the command line or a local web UI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Sabarna Choudhuri" }]
+keywords = ["arxiv", "video", "narration", "tts", "research", "science-communication"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    # web
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+
+    # config & models
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "python-dotenv>=1.0",
+
+    # LLM + TTS
+    "anthropic>=0.39",
+    "openai>=1.50",
+
+    # LaTeX parsing
+    "pylatexenc>=2.10",
+
+    # HTTP / downloads
+    "httpx>=0.27",
+
+    # slide rendering
+    "playwright>=1.47",
+
+    # video assembly
+    "ffmpeg-python>=0.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/sabarna/papercast"
+Repository = "https://github.com/sabarna/papercast"
+Issues = "https://github.com/sabarna/papercast/issues"
+
+[project.scripts]
+papercast = "app.cli:main"
+papercast-web = "app.web:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

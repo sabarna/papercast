@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Job {{ job.id }} — PaperCast{% endblock %}
+
+{% block content %}
+<section class="job">
+  <h1>arXiv <code>{{ job.arxiv_id }}</code></h1>
+
+  <div
+    id="job-status"
+    hx-get="/jobs/{{ job.id }}/status"
+    hx-trigger="load, every 2s"
+    hx-swap="outerHTML"
+  >
+    {% include "_status.html" %}
+  </div>
+</section>
+{% endblock %}

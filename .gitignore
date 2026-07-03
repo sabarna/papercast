@@ -1,0 +1,26 @@
+# env / secrets
+.env
+.venv/
+venv/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# project
+workspace/
+*.mp4
+*.mp3
+*.png
+!app/static/**/*.png
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
