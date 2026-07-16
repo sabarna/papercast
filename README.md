@@ -98,7 +98,15 @@ playwright install chromium
 cp .env.example .env
 ```
 
-Now open `.env` and set your key (from the section above):
+Now open `.env` in a text editor and set your key. `.env` is a **hidden file**
+(the leading dot), so a file browser may not show it — open it from the terminal:
+
+```bash
+open -e .env        # macOS (TextEdit)
+nano .env           # Linux/macOS — or: vi .env, code .env
+```
+
+Set this line and save:
 
 ```
 OPENAI_API_KEY=sk-your-real-key-here
@@ -106,7 +114,7 @@ OPENAI_API_KEY=sk-your-real-key-here
 
 > `.env` is git-ignored — your key stays on your machine and is never committed.
 > You can also export `OPENAI_API_KEY` as an environment variable instead of
-> using the file.
+> using the file. In macOS Finder, press **Cmd + Shift + .** to reveal hidden files.
 
 Keep the virtual environment active whenever you use PaperCast. In a new
 terminal, re-activate it with `source .venv/bin/activate`.
