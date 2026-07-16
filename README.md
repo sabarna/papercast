@@ -123,25 +123,40 @@ terminal, re-activate it with `source .venv/bin/activate`.
 
 ## Usage — command line
 
-Run from the project folder with the virtual environment active:
+Run from the project folder. Each new terminal starts *without* the environment,
+so if your prompt doesn't show `(.venv)`, activate it first:
 
 ```bash
-# simplest — writes ./1706.03762.mp4
+cd papercast
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+```
+
+Then generate a video. The first argument is your paper — an **arXiv ID**, an
+**arXiv URL**, a **local PDF path**, or a **PDF URL**:
+
+```bash
+# an arXiv paper, by its arXiv ID  ->  writes ./1706.03762.mp4
+# (1706.03762 is the arXiv ID of "Attention Is All You Need")
 python3 -m app.cli 1706.03762
 
-# a URL works too, and you can choose the output path
-python3 -m app.cli https://arxiv.org/abs/1706.03762 -o talk.mp4
+# the same paper via its arXiv URL, choosing the output filename
+python3 -m app.cli https://arxiv.org/abs/1706.03762 -o attention.mp4
 
-# tune length, voice, and model
-python3 -m app.cli 1706.03762 --duration 300 --voice nova --model gpt-5.5
-
-# a local PDF or a PDF URL works too
+# a PDF on your computer
 python3 -m app.cli ~/Downloads/paper.pdf
+
+# a PDF hosted online
 python3 -m app.cli https://example.com/paper.pdf -o talk.mp4
 
-# keep the intermediate slides / audio for inspection
+# tune length (seconds), voice, and model
+python3 -m app.cli 1706.03762 --duration 300 --voice nova --model gpt-5.5
+
+# keep the intermediate slides / audio to inspect them
 python3 -m app.cli 1706.03762 --keep-workspace -v
 ```
+
+> An **arXiv ID** looks like `1706.03762` (or `2504.13837`) — the number in an
+> arXiv URL such as `arxiv.org/abs/1706.03762`.
 
 `python3 -m app.cli --help` lists every option. A good first paper to try is
 `1706.03762` (*Attention Is All You Need*).
@@ -158,6 +173,7 @@ python3 -m app.cli 1706.03762 --keep-workspace -v
 ## Usage — web UI
 
 ```bash
+source .venv/bin/activate            # if your prompt doesn't already show (.venv)
 python3 -m app.web
 # then open http://127.0.0.1:8000
 ```
