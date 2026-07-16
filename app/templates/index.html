@@ -2,14 +2,14 @@
 
 {% block content %}
 <section class="hero">
-  <h1>Turn an arXiv paper into a narrated video</h1>
-  <p class="lead">Paste an arXiv ID or URL.</p>
+  <h1>Turn a paper into a narrated video</h1>
+  <p class="lead">Paste an arXiv ID, an arXiv URL, or a link to a PDF.</p>
 
   <form method="post" action="/jobs" class="upload-form">
     <input
       type="text"
       name="arxiv_input"
-      placeholder="2301.07041  or  https://arxiv.org/abs/2301.07041"
+      placeholder="2301.07041   ·   https://arxiv.org/abs/2301.07041   ·   https://example.com/paper.pdf"
       required
       autofocus
     />

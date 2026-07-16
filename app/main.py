@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import jobs
+from app.pipeline import acquire
 from app.auth import require_auth
 from app.cleanup import cleanup_workspace
 from app.config import settings
@@ -45,15 +46,24 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
-# accepts "2301.07041", "2301.07041v2", full URLs, and abs/pdf URLs
-_ARXIV_RE = re.compile(r"(\d{4}\.\d{4,5})(v\d+)?")
+def _resolve_web_input(raw: str) -> str:
+    """Validate a submitted input for the web UI.
 
-
-def _normalize_arxiv_id(raw: str) -> str:
-    m = _ARXIV_RE.search(raw)
-    if not m:
-        raise HTTPException(status_code=400, detail=f"Could not parse an arXiv ID from: {raw!r}")
-    return m.group(1)
+    Accepts an arXiv ID/URL or a PDF URL. Local file paths are rejected here —
+    the server must not read arbitrary files off disk from a web request.
+    """
+    raw = raw.strip()
+    try:
+        kind, _value, _slug = acquire.detect_source(raw)
+    except (ValueError, FileNotFoundError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if kind == "pdf_path":
+        raise HTTPException(
+            status_code=400,
+            detail="Local file paths aren't allowed here. Use an arXiv ID or a PDF URL "
+                   "(the command-line tool can take local PDFs).",
+        )
+    return raw
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -63,8 +73,8 @@ async def index(request: Request):
 
 @app.post("/jobs")
 async def create_job(arxiv_input: str = Form(...)):
-    arxiv_id = _normalize_arxiv_id(arxiv_input)
-    job = jobs.create_job(arxiv_id)
+    source = _resolve_web_input(arxiv_input)
+    job = jobs.create_job(source)
     asyncio.create_task(jobs.run_job(job.id))
     return RedirectResponse(url=f"/jobs/{job.id}", status_code=303)
 

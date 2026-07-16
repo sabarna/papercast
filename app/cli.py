@@ -1,10 +1,11 @@
 """PaperCast command-line interface.
 
-Generate a narrated slideshow video from an arXiv paper straight from the
-terminal — no web server required:
+Generate a narrated slideshow video from an arXiv paper OR any PDF, straight
+from the terminal — no web server required:
 
     papercast 2301.07041
-    papercast https://arxiv.org/abs/2301.07041 -o talk.mp4 --duration 300 --voice nova
+    papercast paper.pdf -o talk.mp4
+    papercast https://example.com/paper.pdf --voice nova
 
 The same pipeline powers the web UI (`papercast-web`).
 """
@@ -22,26 +23,15 @@ from app.config import settings
 
 log = logging.getLogger("papercast.cli")
 
-# accepts "2301.07041", "2301.07041v2", full URLs, and abs/pdf URLs
-_ARXIV_RE = re.compile(r"(\d{4}\.\d{4,5})(v\d+)?")
-
-
-def _normalize_arxiv_id(raw: str) -> str:
-    m = _ARXIV_RE.search(raw)
-    if not m:
-        raise SystemExit(f"error: could not parse an arXiv ID from: {raw!r}")
-    return m.group(1)
-
-
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="papercast",
-        description="Turn an arXiv paper into a narrated slideshow video, locally.",
+        description="Turn an arXiv paper or any PDF into a narrated slideshow video, locally.",
     )
-    p.add_argument("paper", help="arXiv ID or URL (e.g. 2301.07041)")
+    p.add_argument("paper", help="arXiv ID/URL, a local PDF path, or a PDF URL")
     p.add_argument(
         "-o", "--output", type=Path, default=None,
-        help="output .mp4 path (default: ./<arxiv_id>.mp4)",
+        help="output .mp4 path (default: ./<name>.mp4)",
     )
     p.add_argument(
         "--duration", type=int, default=None,
@@ -68,19 +58,16 @@ def _check_keys() -> None:
 async def _run(args: argparse.Namespace) -> Path:
     # Import pipeline lazily so `--help` stays fast and import-light.
     from app.cleanup import prune_intermediates
-    from app.pipeline import assemble, ingest, narrative, parse, slides, structure, tts
+    from app.pipeline import acquire, assemble, narrative, slides, tts
 
-    arxiv_id = _normalize_arxiv_id(args.paper)
-    workdir = settings.job_dir(f"cli-{arxiv_id}")
-    output = args.output or Path(f"{arxiv_id}.mp4")
+    kind, value, slug = acquire.detect_source(args.paper)
+    workdir = settings.job_dir(f"cli-{slug}")
+    output = args.output or Path(f"{slug}.mp4")
 
-    log.info("[1/7] Fetching arXiv source for %s", arxiv_id)
-    source_dir = await ingest.fetch_arxiv_source(arxiv_id, workdir)
-
-    log.info("[2/7] Parsing LaTeX")
-    parsed = await asyncio.to_thread(parse.parse_source, source_dir)
-    paper = await asyncio.to_thread(structure.build_paper, arxiv_id, parsed, workdir)
-    log.info("       %r — %d sections, %d figures, %d equations",
+    label = {"arxiv": f"arXiv {value}", "pdf_path": "local PDF", "pdf_url": "PDF URL"}[kind]
+    log.info("[1/7] Acquiring source (%s)", label)
+    paper = await acquire.build_paper(kind, value, slug, workdir)
+    log.info("[2/7] Parsed %r — %d sections, %d figures, %d equations",
              paper.title, len(paper.sections), len(paper.figures), len(paper.equations))
 
     log.info("[3/7] Writing narrative (%s)", settings.narrative_model)

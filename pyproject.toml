@@ -32,6 +32,11 @@ dependencies = [
     # LaTeX parsing
     "pylatexenc>=2.10",
 
+    # PDF parsing (non-arXiv papers)
+    "pdfplumber>=0.11",
+    "pypdfium2>=4.30",
+    "Pillow>=10.0",
+
     # HTTP / downloads
     "httpx>=0.27",
 

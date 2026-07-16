@@ -14,7 +14,7 @@ from typing import Dict
 from app.cleanup import prune_intermediates
 from app.config import settings
 from app.models import Job, JobStatus
-from app.pipeline import assemble, ingest, narrative, parse, slides, structure, tts
+from app.pipeline import acquire, assemble, narrative, slides, tts
 
 log = logging.getLogger(__name__)
 
@@ -82,13 +82,12 @@ async def run_job(job_id: str) -> None:
     workdir = settings.job_dir(job.id)
 
     try:
-        _update(job, "ingesting", 0.05, "Fetching arXiv source")
-        source_dir = await ingest.fetch_arxiv_source(job.arxiv_id, workdir)
+        kind, value, slug = acquire.detect_source(job.arxiv_id)
 
-        _update(job, "parsing", 0.15, "Parsing LaTeX")
-        parsed = await asyncio.to_thread(parse.parse_source, source_dir)
+        _update(job, "ingesting", 0.05, "Acquiring source")
+        paper = await acquire.build_paper(kind, value, slug, workdir)
 
-        paper = await asyncio.to_thread(structure.build_paper, job.arxiv_id, parsed, workdir)
+        _update(job, "parsing", 0.15, "Parsed paper")
 
         _update(job, "scripting", 0.30, "Writing narrative")
         script = await narrative.generate_script(paper, settings.target_duration_s)
