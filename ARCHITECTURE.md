@@ -1,6 +1,6 @@
 # PaperCast — Architecture
 
-An MVP that turns an arXiv paper into a 5–10 minute narrated slideshow video.
+Turns an arXiv paper — or any PDF — into a 5–10 minute narrated slideshow video.
 
 ## 1. Product at a glance
 
@@ -19,6 +19,7 @@ An MVP that turns an arXiv paper into a 5–10 minute narrated slideshow video.
 | LLM              | OpenAI GPT (`gpt-5.5`)                    | Long context (whole paper fits), strong reasoning       |
 | TTS              | OpenAI TTS (`tts-1` / `gpt-4o-mini-tts`) | Cheap, fast, decent natural voice                       |
 | LaTeX parsing    | `pylatexenc` + custom heuristics         | Pure Python, handles arXiv's messy real-world LaTeX     |
+| PDF parsing      | `pdfplumber` + `pypdfium2` + `Pillow`    | Text/layout, page rasterization, figure/equation crops  |
 | Math rendering   | `matplotlib` mathtext OR KaTeX → PNG     | No full TeX install needed for MVP                      |
 | Slide rendering  | HTML template → `playwright` screenshot  | Full CSS control, same template renders in browser too  |
 | Video assembly   | `ffmpeg` via `ffmpeg-python`             | Battle-tested, handles audio+image concat               |
@@ -26,6 +27,17 @@ An MVP that turns an arXiv paper into a 5–10 minute narrated slideshow video.
 | Storage          | Local `workspace/<job_id>/` folders      | Files on disk, no DB                                    |
 
 ## 3. Pipeline
+
+### 3.0 Source routing (`app/pipeline/acquire.py`)
+`detect_source()` classifies the input as `arxiv`, `pdf_path`, or `pdf_url`:
+
+- **arXiv** → download LaTeX source (`ingest` → `parse` → `structure`). Best quality.
+- **PDF (local or URL)** → `pdf_ingest` fetches the file, then `pdf_parse` extracts
+  text, sections, figures, and equation-image crops directly from the pages.
+
+Both paths produce the same typed `Paper`, so Narrative → Slides → TTS → Assemble
+are shared. For PDFs, equations are captured as **images** (no LaTeX), so they flow
+through the pipeline as figures; the KaTeX equation path is arXiv-only.
 
 ```
 ┌──────────┐   ┌─────────┐   ┌───────────┐   ┌──────────┐   ┌────────┐   ┌──────┐   ┌──────────┐
@@ -190,8 +202,11 @@ paper-to-video/
 │   ├── models.py           # Pydantic: Paper, Figure, Script, Beat
 │   ├── pipeline/
 │   │   ├── __init__.py
+│   │   ├── acquire.py       # source routing: arxiv vs pdf
 │   │   ├── ingest.py
 │   │   ├── parse.py
+│   │   ├── pdf_ingest.py    # fetch a local/URL PDF
+│   │   ├── pdf_parse.py     # PDF → Paper (text, figures, equation crops)
 │   │   ├── structure.py
 │   │   ├── narrative.py
 │   │   ├── slides.py

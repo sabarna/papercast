@@ -1,14 +1,14 @@
 # PaperCast
 
-**Turn an arXiv paper into a narrated slideshow video.**
+**Turn an arXiv paper — or any PDF — into a narrated slideshow video.**
 
-Give PaperCast an arXiv ID and get back an `.mp4`: AI-written narration, slides
-that surface the paper's figures, and typeset equations. Everything runs on your
-own machine — you bring your own API key.
+Give PaperCast an arXiv ID or a PDF and get back an `.mp4`: AI-written narration,
+slides that surface the paper's figures, and typeset equations. Everything runs
+on your own machine — you bring your own API key.
 
 Use it two ways:
 
-- **Command line** — `python3 -m app.cli 1706.03762` and a video pops out.
+- **Command line** — `python3 -m app.cli 1706.03762` (or `... paper.pdf`) and a video pops out.
 - **Web UI** — `python3 -m app.web`, then open the browser and watch progress live.
 
 ---
@@ -22,7 +22,25 @@ Use it two ways:
 5. **Voiceover** — OpenAI TTS narrates each beat; slide time = narration length.
 6. **Assemble** — `ffmpeg` stitches the slides and audio into one `.mp4`.
 
+> For **PDF inputs**, steps 1–2 are replaced by a PDF parser (pdfplumber +
+> pypdfium2) that extracts text and figures from the pages and captures
+> equations as cropped images.
+
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full design.
+
+---
+
+## Inputs
+
+PaperCast takes three kinds of input and picks the best path automatically:
+
+- **arXiv ID or URL** — e.g. `1706.03762`. Downloads the paper's **LaTeX source**: real captions, typeset equations, exact section structure. Best quality.
+- **Local PDF** — e.g. `~/Downloads/paper.pdf`. Parsed directly.
+- **PDF URL** — e.g. `https://example.com/paper.pdf`. Downloaded, then parsed.
+
+PDFs have no LaTeX, so text and figures are extracted from the pages and
+equations are captured as cropped images. The web UI accepts arXiv IDs and PDF
+URLs; local file paths are command-line only.
 
 ---
 
@@ -109,6 +127,10 @@ python3 -m app.cli https://arxiv.org/abs/1706.03762 -o talk.mp4
 # tune length, voice, and model
 python3 -m app.cli 1706.03762 --duration 300 --voice nova --model gpt-5.5
 
+# a local PDF or a PDF URL works too
+python3 -m app.cli ~/Downloads/paper.pdf
+python3 -m app.cli https://example.com/paper.pdf -o talk.mp4
+
 # keep the intermediate slides / audio for inspection
 python3 -m app.cli 1706.03762 --keep-workspace -v
 ```
@@ -164,8 +186,12 @@ to require a login so nobody else can spend your API credits.
 
 ## Limitations
 
-- Needs the paper's **LaTeX source** on arXiv. PDF-only submissions aren't supported.
-- Equation rendering uses **KaTeX** (a LaTeX subset), so very custom notation may
+- **arXiv** uses LaTeX (best quality); **PDFs** are supported too, but extraction is
+  inherently messier — multi-column layouts, section splitting, and figure/equation
+  detection are heuristic.
+- For PDFs, equations become **images** (no LaTeX). Narration aligns to figures and
+  equations via their captions, so a figure with no caption may be placed loosely.
+- arXiv equations render with **KaTeX** (a LaTeX subset), so very custom notation may
   render approximately.
 - Uses the **paid OpenAI API** — expect roughly well under $1 per paper.
 
