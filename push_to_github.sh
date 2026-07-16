@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Initialise git history and push PaperCast to a new GitHub repo.
+# Initialise git history and push Readel to a new GitHub repo.
 # Run this on your own machine (not needed if you push manually).
 #
 #   ./push_to_github.sh <github-username> [repo-name]
@@ -9,17 +9,17 @@
 set -euo pipefail
 
 USER="${1:?usage: ./push_to_github.sh <github-username> [repo-name]}"
-REPO="${2:-papercast}"
+REPO="${2:-readel}"
 
 # point project URLs at the real repo
 if command -v sed >/dev/null; then
-  sed -i.bak "s#github.com/OWNER/papercast#github.com/${USER}/${REPO}#g" pyproject.toml README.md CONTRIBUTING.md 2>/dev/null || true
+  sed -i.bak "s#github.com/OWNER/readel#github.com/${USER}/${REPO}#g" pyproject.toml README.md CONTRIBUTING.md 2>/dev/null || true
   rm -f pyproject.toml.bak README.md.bak CONTRIBUTING.md.bak 2>/dev/null || true
 fi
 
 git init -b main
 git add .
-git commit -m "Initial commit: PaperCast — arXiv paper to narrated video (CLI + web UI)"
+git commit -m "Initial commit: Readel — arXiv paper to narrated video (CLI + web UI)"
 
 if command -v gh >/dev/null; then
   # Creates the repo as PUBLIC and pushes in one step.

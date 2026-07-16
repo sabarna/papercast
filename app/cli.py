@@ -1,13 +1,13 @@
-"""PaperCast command-line interface.
+"""Readel command-line interface.
 
 Generate a narrated slideshow video from an arXiv paper OR any PDF, straight
 from the terminal — no web server required:
 
-    papercast 2301.07041
-    papercast paper.pdf -o talk.mp4
-    papercast https://example.com/paper.pdf --voice nova
+    readel 2301.07041
+    readel paper.pdf -o talk.mp4
+    readel https://example.com/paper.pdf --voice nova
 
-The same pipeline powers the web UI (`papercast-web`).
+The same pipeline powers the web UI (`readel-web`).
 """
 from __future__ import annotations
 
@@ -21,11 +21,11 @@ from pathlib import Path
 
 from app.config import settings
 
-log = logging.getLogger("papercast.cli")
+log = logging.getLogger("readel.cli")
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="papercast",
+        prog="readel",
         description="Turn an arXiv paper or any PDF into a narrated slideshow video, locally.",
     )
     p.add_argument("paper", help="arXiv ID/URL, a local PDF path, or a PDF URL")

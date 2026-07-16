@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="PaperCast", dependencies=[Depends(require_auth)], lifespan=lifespan)
+app = FastAPI(title="Readel", dependencies=[Depends(require_auth)], lifespan=lifespan)
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")

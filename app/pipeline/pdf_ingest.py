@@ -36,7 +36,7 @@ async def fetch_pdf(kind: str, value: str, workdir: Path) -> Path:
     if kind == "pdf_url":
         log.info("GET %s", value)
         async with httpx.AsyncClient(follow_redirects=True, timeout=90.0) as client:
-            resp = await client.get(value, headers={"User-Agent": "papercast/0.1"})
+            resp = await client.get(value, headers={"User-Agent": "readel/0.1"})
             resp.raise_for_status()
             ctype = resp.headers.get("content-type", "")
             data = resp.content

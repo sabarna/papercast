@@ -1,8 +1,8 @@
-# PaperCast
+# Readel
 
 **Turn an arXiv paper — or any PDF — into a narrated slideshow video.**
 
-Give PaperCast an arXiv ID or a PDF and get back an `.mp4`: AI-written narration,
+Give Readel an arXiv ID or a PDF and get back an `.mp4`: AI-written narration,
 slides that surface the paper's figures, and typeset equations. Everything runs
 on your own machine — you bring your own API key.
 
@@ -32,7 +32,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full design.
 
 ## Inputs
 
-PaperCast takes three kinds of input and picks the best path automatically:
+Readel takes three kinds of input and picks the best path automatically:
 
 - **arXiv ID or URL** — e.g. `1706.03762`. Downloads the paper's **LaTeX source**: real captions, typeset equations, exact section structure. Best quality.
 - **Local PDF** — e.g. `~/Downloads/paper.pdf`. Parsed directly.
@@ -54,11 +54,11 @@ URLs; local file paths are command-line only.
 
 ## Getting an OpenAI API key
 
-PaperCast uses the OpenAI API for **both** the narration script and the spoken
+Readel uses the OpenAI API for **both** the narration script and the spoken
 voiceover, so you'll need your own API key.
 
 1. Go to **[platform.openai.com/api-keys](https://platform.openai.com/api-keys)** and sign in (or create an account).
-2. Click **Create new secret key**, give it a name (e.g. `papercast`), and **copy it now** — OpenAI only shows it once. It looks like `sk-...`.
+2. Click **Create new secret key**, give it a name (e.g. `readel`), and **copy it now** — OpenAI only shows it once. It looks like `sk-...`.
 3. Add a payment method and a little credit at **[platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing)**.
 
 > **Important:** the API is billed per use and is **separate from ChatGPT Plus** —
@@ -77,14 +77,14 @@ Python 3.11+ required. A virtual environment is strongly recommended so the
 install stays self-contained and the commands resolve correctly.
 
 ```bash
-git clone https://github.com/sabarna/papercast.git
-cd papercast
+git clone https://github.com/sabarna/readel.git
+cd readel
 
 # 1. Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 
-# 2. Install PaperCast and its Python dependencies
+# 2. Install Readel and its Python dependencies
 python3 -m pip install -e .
 
 # 3. Install the headless browser used to render slides
@@ -116,7 +116,7 @@ OPENAI_API_KEY=sk-your-real-key-here
 > You can also export `OPENAI_API_KEY` as an environment variable instead of
 > using the file. In macOS Finder, press **Cmd + Shift + .** to reveal hidden files.
 
-Keep the virtual environment active whenever you use PaperCast. In a new
+Keep the virtual environment active whenever you use Readel. In a new
 terminal, re-activate it with `source .venv/bin/activate`.
 
 ---
@@ -127,7 +127,7 @@ Run from the project folder. Each new terminal starts *without* the environment,
 so if your prompt doesn't show `(.venv)`, activate it first:
 
 ```bash
-cd papercast
+cd readel
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 ```
 
@@ -162,7 +162,7 @@ python3 -m app.cli 1706.03762 --keep-workspace -v
 `1706.03762` (*Attention Is All You Need*).
 
 > **Shortcut command:** after `pip install -e .` you can also run
-> `papercast <id>` and `papercast-web`. If either reports
+> `readel <id>` and `readel-web`. If either reports
 > `ModuleNotFoundError: No module named 'app'`, your shell is resolving a
 > different environment — use the `python3 -m app.cli` / `python3 -m app.web`
 > forms instead (they always work from the project folder). See
@@ -189,8 +189,8 @@ to require a login so nobody else can spend your API credits.
 ## Troubleshooting
 
 - **`command not found: pip`** — use `python3 -m pip ...` instead of bare `pip`.
-- **`ModuleNotFoundError: No module named 'app'`** when running `papercast` /
-  `papercast-web` — the shortcut is resolving to a different virtual environment.
+- **`ModuleNotFoundError: No module named 'app'`** when running `readel` /
+  `readel-web` — the shortcut is resolving to a different virtual environment.
   Run `python3 -m app.cli <id>` (or `python3 -m app.web`) from the project
   folder, or recreate the venv:
   ```bash
@@ -202,7 +202,7 @@ to require a login so nobody else can spend your API credits.
   from ChatGPT Plus (see [Getting an OpenAI API key](#getting-an-openai-api-key)).
 - **The model name is rejected** — set `NARRATIVE_MODEL` in `.env` to a model your
   account can access (a current `gpt-...` id from your OpenAI dashboard).
-- **Some equations render as plain upright text** — PaperCast typesets math with
+- **Some equations render as plain upright text** — Readel typesets math with
   KaTeX, which covers a subset of LaTeX. Commands from packages not in the arXiv
   source fall back to readable upright text rather than breaking the slide.
 

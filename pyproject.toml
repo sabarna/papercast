@@ -1,5 +1,5 @@
 [project]
-name = "papercast"
+name = "readel"
 version = "0.1.0"
 description = "Turn an arXiv paper into a narrated slideshow video — from the command line or a local web UI."
 readme = "README.md"
@@ -48,13 +48,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sabarna/papercast"
-Repository = "https://github.com/sabarna/papercast"
-Issues = "https://github.com/sabarna/papercast/issues"
+Homepage = "https://github.com/sabarna/readel"
+Repository = "https://github.com/sabarna/readel"
+Issues = "https://github.com/sabarna/readel/issues"
 
 [project.scripts]
-papercast = "app.cli:main"
-papercast-web = "app.web:main"
+readel = "app.cli:main"
+readel-web = "app.web:main"
 
 [project.optional-dependencies]
 dev = [

@@ -1,13 +1,13 @@
-# Contributing to PaperCast
+# Contributing to Readel
 
-Thanks for your interest in improving PaperCast! Contributions of all sizes are
+Thanks for your interest in improving Readel! Contributions of all sizes are
 welcome — bug reports, docs, and code.
 
 ## Getting set up
 
 ```bash
-git clone https://github.com/sabarna/papercast.git
-cd papercast
+git clone https://github.com/sabarna/readel.git
+cd readel
 pip install -e ".[dev]"
 playwright install chromium
 cp .env.example .env   # add your API keys

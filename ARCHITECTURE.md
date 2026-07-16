@@ -1,4 +1,4 @@
-# PaperCast — Architecture
+# Readel — Architecture
 
 Turns an arXiv paper — or any PDF — into a 5–10 minute narrated slideshow video.
 

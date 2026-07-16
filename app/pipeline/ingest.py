@@ -37,7 +37,7 @@ async def fetch_arxiv_source(arxiv_id: str, workdir: Path) -> Path:
     log.info("GET %s", url)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
-        resp = await client.get(url, headers={"User-Agent": "papercast/0.1"})
+        resp = await client.get(url, headers={"User-Agent": "readel/0.1"})
         resp.raise_for_status()
         data = resp.content
 
@@ -49,7 +49,7 @@ async def fetch_arxiv_source(arxiv_id: str, workdir: Path) -> Path:
         async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
             pdf_resp = await client.get(
                 ARXIV_PDF_URL.format(arxiv_id=arxiv_id),
-                headers={"User-Agent": "papercast/0.1"},
+                headers={"User-Agent": "readel/0.1"},
             )
             if pdf_resp.status_code == 200:
                 pdf_path.write_bytes(pdf_resp.content)
